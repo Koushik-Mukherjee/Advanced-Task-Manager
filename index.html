@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced Task Manager</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="light">
+  <div class="app">
+    <aside class="card">
+      <div class="section">
+        <h3>Projects</h3>
+        <div class="list" id="projectList"></div>
+        <div class="flex"><input id="newProject" placeholder="New project" /><button class="btn" id="addProject">Add</button></div>
+      </div>
+      <div class="section">
+        <h3>Quick Filters</h3>
+        <div class="row" style="margin-top:8px">
+          <select id="priorityFilter">
+            <option value="">Priority</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+          <select id="statusFilter">
+            <option value="">Status</option>
+            <option value="todo">To Do</option>
+            <option value="inprogress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div style="margin-top:12px">
+          <label>From Date</label>
+          <input type="date" id="fromDate" />
+        </div>
+        <div style="margin-top:12px">
+          <label>To Date</label>
+          <input type="date" id="toDate" />
+        </div>
+        <button class="btn" style="margin-top:16px" id="clearFilters">Clear Filters</button>
+      </div>
+      <div class="section">
+        <h3>Data</h3>
+        <div class="flex">
+          <button class="btn ghost" id="exportBtn" title="Ctrl+E">Export</button>
+          <label class="btn ghost" for="importFile" title="Ctrl+I">Import</label>
+          <input id="importFile" type="file" accept="application/json" class="sr" />
+        </div>
+      </div>
+      <div class="section">
+        <h3>Shortcuts</h3>
+        <div class="list">
+          <div class="item"><span class="chip">N</span> New task</div>
+          <div class="item"><span class="chip">/</span> Focus search</div>
+          <div class="item"><span class="chip">Ctrl+E</span> Export JSON</div>
+          <div class="item"><span class="chip">Ctrl+I</span> Import JSON</div>
+        </div>
+      </div>
+    </aside>
+
+    <header class="card">
+      <div class="brand">
+        <div class="brand-icon">✔</div>
+        <h1>Advanced Task Manager</h1>
+        <span class="chip" id="todayChip"></span>
+      </div>
+      <div class="controls">
+        <div class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/></svg>
+          <input id="searchInput" placeholder="Search tasks ( / to focus )" />
+        </div>
+        <button class="btn" id="voiceBtn" title="Voice add (en)">🎤</button>
+        <button class="btn" id="themeToggle">🌙</button>
+        <button class="btn success" id="newTaskBtn">New Task</button>
+        <button class="btn primary" id="notifyBtn">Allow Alerts</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="tabs">
+        <div class="tab active" data-tab="kanban">Kanban</div>
+        <div class="tab" data-tab="calendar">Calendar</div>
+        <div class="tab" data-tab="dashboard">Dashboard</div>
+      </div>
+
+      <!-- Kanban View -->
+      <div class="kanban" id="kanbanView">
+        <div class="column" data-status="todo">
+          <h4>To Do</h4>
+          <div class="dropzone" id="todoCol"></div>
+        </div>
+        <div class="column" data-status="inprogress">
+          <h4>In Progress</h4>
+          <div class="dropzone" id="inprogressCol"></div>
+        </div>
+        <div class="column" data-status="done">
+          <h4>Done</h4>
+          <div class="dropzone" id="doneCol"></div>
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <div class="calendar" id="calendarView"></div>
+
+      <!-- Dashboard View -->
+      <div id="dashboardView" class="hidden">
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <div class="stat-label">Total Tasks</div>
+            <div class="stat-value" id="totalCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Completed Tasks</div>
+            <div class="stat-value" id="doneCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Completion Rate</div>
+            <div class="stat-value" id="completionRate">0%</div>
+          </div>
+        </div>
+        
+        <div class="progress" style="margin:20px 0"><span id="progressBar" style="width:0%"></span></div>
+        
+        <div class="charts-container">
+          <div class="chart-card">
+            <h3 class="chart-title">Tasks by Priority</h3>
+            <canvas id="priorityChart" width="400" height="250"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3 class="chart-title">Completed Tasks by Priority</h3>
+            <canvas id="donePriorityChart" width="400" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <section class="details card">
+      <div class="section muted">
+        <div class="flex"><strong>Task Details</strong><span class="space"></span><button class="btn danger" id="deleteTaskBtn">Delete</button></div>
+        <div class="row" style="margin-top:12px">
+          <div>
+            <label>Title</label>
+            <input id="d_title" />
+          </div>
+          <div>
+            <label>Project</label>
+            <input id="d_project" list="projectDatalist" />
+            <datalist id="projectDatalist"></datalist>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Priority</label>
+            <select id="d_priority"><option>High</option><option selected>Medium</option><option>Low</option></select>
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="d_status"><option value="todo">To Do</option><option value="inprogress">In Progress</option><option value="done">Done</option></select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Due Date</label>
+            <input type="date" id="d_due" />
+          </div>
+          <div>
+            <label>Due Time</label>
+            <input type="time" id="d_due_time" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Start Date</label>
+            <input type="date" id="d_start" />
+          </div>
+          <div>
+            <label>Start Time</label>
+            <input type="time" id="d_start_time" />
+          </div>
+        </div>
+        <div>
+          <label>Description</label>
+          <textarea id="d_desc"></textarea>
+        </div>
+        <div class="flex" style="justify-content:space-between; margin-top:12px">
+          <div class="flex" style="gap:8px"><span class="chip" id="d_id">#—</span> <span class="chip" id="d_created">—</span></div>
+          <div class="flex" style="gap:8px"><button class="btn" id="saveTaskBtn">Save</button><button class="btn success" id="markDoneBtn">Mark Done</button></div>
+        </div>
+      </div>
+      <div class="section muted">
+        <div class="flex"><strong>Pomodoro</strong><span class="space"></span>
+          <select id="p_mode"><option value="25-5">25/5</option><option value="50-10">50/10</option><option value="90-15">90/15</option></select>
+        </div>
+        <div class="flex" style="justify-content:center; font-size:40px; font-weight:800; margin:12px 0"><span id="p_timer">00:00</span></div>
+        <div class="flex" style="justify-content:center; gap:10px">
+          <button class="btn" id="p_start">Start</button>
+          <button class="btn" id="p_pause">Pause</button>
+          <button class="btn" id="p_reset">Reset</button>
+        </div>
+        <div class="flex" style="justify-content:center; margin-top:8px"><span class="chip" id="p_state">Idle</span></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- New Task Modal -->
+  <div class="modal" id="taskModal">
+    <div class="sheet">
+      <div class="flex" style="margin-bottom:12px"><h3 style="margin:0">New Task</h3><span class="space"></span><button class="btn ghost" id="closeModal">✕</button></div>
+      <div class="row">
+        <div>
+          <label>Title</label>
+          <input id="m_title" placeholder="What needs to be done?" />
+        </div>
+        <div>
+          <label>Project</label>
+          <input id="m_project" placeholder="Project" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Priority</label>
+          <select id="m_priority"><option>High</option><option selected>Medium</option><option>Low</option></select>
+        </div>
+        <div>
+          <label>Due Date</label>
+          <input type="date" id="m_due" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Due Time</label>
+          <input type="time" id="m_due_time" />
+        </div>
+        <div>
+          <label>Start Time</label>
+          <input type="time" id="m_start_time" />
+        </div>
+      </div>
+      <div>
+        <label>Description</label>
+        <textarea id="m_desc" placeholder="Optional notes..."></textarea>
+      </div>
+      <div class="flex" style="margin-top:16px; justify-content:end">
+        <button class="btn" id="createTaskBtn">Create Task</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
